@@ -1,34 +1,30 @@
-# Stage 1: Build the app
-FROM node:20-alpine AS builder
+# ---- Stage 1: Build ----
+FROM node:18-bullseye AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and yarn.lock first for caching
-COPY package.json yarn.lock ./
+# Copy only package files to install dependencies
+COPY package*.json ./
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN npm install --production
 
-# Copy all source files
+# Copy rest of the project
 COPY . .
 
-# Build the project (adjust if you have a build script)
-RUN yarn build
+# ---- Stage 2: Run ----
+FROM node:18-bullseye-slim
 
-# Stage 2: Run the app
-FROM node:20-alpine
-
+# Set working directory
 WORKDIR /app
 
-# Copy only built files and dependencies from builder
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/yarn.lock ./
+# Copy only production dependencies from builder
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app . 
 
-# Expose the port your app runs on
+# Expose port (replace with your app's port if different)
 EXPOSE 3000
 
-# Start the app (adjust the command if needed)
-CMD ["node", "dist/main.js"]
+# Start the application
+CMD ["node", "server.js"]   # Replace server.js with your app's entry file
