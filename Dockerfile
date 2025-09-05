@@ -2,18 +2,28 @@
 FROM node:18-bullseye AS builder
 WORKDIR /app
 
-# Install system deps (for Rust native builds)
+# Install system dependencies (for Rust/native builds)
 RUN apt-get update && apt-get install -y \
     python3 make g++ curl git pkg-config libssl-dev \
     build-essential cargo \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install deps with Yarn 4
+# Copy Yarn files
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
+
+# Copy all workspace packages (needed for Yarn workspaces)
+COPY packages ./packages
+COPY tools ./tools
+COPY blocksuite ./blocksuite
+COPY frontend ./frontend
+COPY docs ./docs
+COPY tests ./tests
+
+# Install dependencies
 RUN yarn install --immutable
 
-# Copy source
+# Copy the rest of the source code
 COPY . .
 
 # Build the project
