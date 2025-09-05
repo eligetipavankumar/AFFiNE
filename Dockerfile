@@ -8,26 +8,14 @@ RUN apt-get update && apt-get install -y \
     build-essential cargo \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy root package files
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn .yarn
-
-# Copy only workspace package.json files (for faster Yarn install)
-COPY packages/*/package.json ./packages/*/
-COPY tools/*/package.json ./tools/*/
-COPY blocksuite/*/package.json ./blocksuite/*/
-COPY docs/reference/package.json ./docs/reference/
-COPY tests/*/package.json ./tests/*/
-
-# Install dependencies without full source
-RUN yarn install --immutable
-
-# Copy the rest of the source code
+# Copy all source code (required for Yarn workspaces)
 COPY . .
+
+# Install dependencies
+RUN yarn install --immutable
 
 # Build the project
 RUN yarn build
-
 
 # Stage 2: runtime
 FROM node:18-bullseye AS runtime
