@@ -8,10 +8,10 @@ RUN apt-get update && apt-get install -y \
     build-essential cargo \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy all source code (required for Yarn workspaces)
+# Copy entire repo (needed for Yarn v4 workspaces)
 COPY . .
 
-# Install dependencies
+# Install dependencies (Yarn v4 requires full workspace folders)
 RUN yarn install --immutable
 
 # Build the project
