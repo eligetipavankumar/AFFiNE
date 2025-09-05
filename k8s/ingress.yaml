@@ -16,4 +16,3 @@ spec:
                 name: affine-service
                 port:
                   number: 80
-
