@@ -1,30 +1,32 @@
-# ---- Stage 1: Build ----
+# Stage 1: Build
 FROM node:18-bullseye AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy only package files to install dependencies
-COPY package*.json ./
+# Copy only package files first for faster caching
+COPY package.json package-lock.json* ./
 
 # Install dependencies
-RUN npm install --production
+RUN npm install --frozen-lockfile
 
-# Copy rest of the project
+# Copy source code
 COPY . .
 
-# ---- Stage 2: Run ----
+# Build project
+RUN npm run build
+
+# Stage 2: Run
 FROM node:18-bullseye-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy only production dependencies from builder
+# Copy built artifacts and node_modules from builder
+COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app . 
+COPY --from=builder /app/package.json ./package.json
 
-# Expose port (replace with your app's port if different)
-EXPOSE 3000
+# Set environment variables if needed
+ENV NODE_ENV=production
 
-# Start the application
-CMD ["node", "server.js"]   # Replace server.js with your app's entry file
+# Start app
+CMD ["node", "dist/index.js"]
