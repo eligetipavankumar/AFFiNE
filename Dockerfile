@@ -8,15 +8,15 @@ RUN apt-get update && apt-get install -y \
     build-essential cargo \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install deps with Yarn 4 (zero-install compatible if .yarn/cache is committed)
-COPY package.json yarn.lock .yarnrc.yml ./ 
+# Copy and install deps with Yarn 4
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 RUN yarn install --immutable
 
 # Copy source
 COPY . .
 
-# Build the project (this step compiles the monorepo)
+# Build the project
 RUN yarn build
 
 
@@ -25,11 +25,8 @@ FROM node:18-bullseye AS runtime
 WORKDIR /app
 
 # Copy package manager files
-COPY package.json yarn.lock .yarnrc.yml ./ 
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
-
-# Install dependencies (so focus has everything it needs)
-RUN yarn install --immutable
 
 # Install only production dependencies for runtime
 RUN yarn workspaces focus --all --production
@@ -45,5 +42,5 @@ ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000
 
-# Use "serve" to serve frontend build
+# Serve frontend build
 CMD ["yarn", "serve", "-s", "dist", "-l", "3000"]
