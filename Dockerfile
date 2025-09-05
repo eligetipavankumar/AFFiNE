@@ -16,7 +16,6 @@ COPY .yarn .yarn
 COPY packages ./packages
 COPY tools ./tools
 COPY blocksuite ./blocksuite
-COPY frontend ./frontend
 COPY docs ./docs
 COPY tests ./tests
 
