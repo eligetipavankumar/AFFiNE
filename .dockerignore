@@ -1,0 +1,10 @@
+node_modules
+dist
+.next
+.out-tsc
+.git
+Dockerfile
+.dockerignore
+*.log
+.env.local
+
