@@ -24,15 +24,11 @@ RUN yarn build
 FROM node:18-bullseye AS runtime
 WORKDIR /app
 
-# Copy package manager files
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn .yarn
-
-# Install only production dependencies for runtime
-RUN yarn workspaces focus --all --production
-
-# Copy built artifacts from builder
-COPY --from=builder /app . 
+# Copy only required files from builder
+COPY --from=builder /app/package.json /app/yarn.lock /app/.yarnrc.yml ./
+COPY --from=builder /app/.yarn .yarn
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 
 # Use non-root user
 RUN useradd -m affine
