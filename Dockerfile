@@ -1,39 +1,34 @@
-# Stage 1: build
-FROM node:18-bullseye AS builder
+# Stage 1: Build the app
+FROM node:20-alpine AS builder
+
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies (for Rust/native builds)
-RUN apt-get update && apt-get install -y \
-    python3 make g++ curl git pkg-config libssl-dev \
-    build-essential cargo \
-    && rm -rf /var/lib/apt/lists/*
+# Copy package.json and yarn.lock first for caching
+COPY package.json yarn.lock ./
 
-# Copy entire repo (needed for Yarn v4 workspaces)
+# Install dependencies
+RUN yarn install --frozen-lockfile
+
+# Copy all source files
 COPY . .
 
-# Install dependencies (Yarn v4 requires full workspace folders)
-RUN yarn install --immutable
-
-# Build the project
+# Build the project (adjust if you have a build script)
 RUN yarn build
 
-# Stage 2: runtime
-FROM node:18-bullseye AS runtime
+# Stage 2: Run the app
+FROM node:20-alpine
+
 WORKDIR /app
 
-# Copy only required files from builder
-COPY --from=builder /app/package.json /app/yarn.lock /app/.yarnrc.yml ./
-COPY --from=builder /app/.yarn .yarn
-COPY --from=builder /app/dist ./dist
+# Copy only built files and dependencies from builder
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/yarn.lock ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
 
-# Use non-root user
-RUN useradd -m affine
-USER affine
-
-ENV NODE_ENV=production
-ENV PORT=3000
+# Expose the port your app runs on
 EXPOSE 3000
 
-# Serve frontend build
-CMD ["yarn", "serve", "-s", "dist", "-l", "3000"]
+# Start the app (adjust the command if needed)
+CMD ["node", "dist/main.js"]
